@@ -23,11 +23,20 @@ if SUPABASE_SERVICE_ROLE_KEY:
 app = FastAPI(title="ShopSphere API")
 
 # Allow local development origins AND your production Render frontend
+# Allow local development origins AND your exact production Render frontend
 allowed_origins = [
     "http://localhost:5500",
     "http://127.0.0.1:5500",
-    FRONTEND_ORIGIN.strip("/")  # Removes any accidental trailing slashes
+    "https://shop-1-wtfm.onrender.com"  # Hardcoded live frontend to bypass Render env bugs!
 ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True, 
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.add_middleware(
     CORSMiddleware,
