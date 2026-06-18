@@ -101,8 +101,8 @@ def login(payload: LoginRequest, response: Response):
         key="access_token",
         value=result.session.access_token,
         httponly=True,
-        samesite="lax",
-        secure=False, # Set to True in production with HTTPS
+        samesite="none", # Changed from lax to none for cross-domain cookies
+        secure=True,     # Changed from False to True because Render uses HTTPS
     )
 
     return {
