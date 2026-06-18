@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ShopSphere — Sign in or create an account</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght=500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg-deep:#11132B;
@@ -396,7 +396,6 @@
 </div>
 
 <script>
-  // Remove the trailing slash!
   const API_BASE = 'https://shop-g4ox.onrender.com';
 
   const tabLogin = document.getElementById('tabLogin');
@@ -459,7 +458,7 @@
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // CRITICAL: Tells the browser to accept the incoming HttpOnly cookie
+        credentials: 'include', 
         body: JSON.stringify({ email, password })
       });
 
@@ -470,7 +469,6 @@
       }
 
       showBanner(data.message || 'Signed in successfully.', 'success');
-      // window.location.href = '/dashboard';
 
     } catch (err) {
       showBanner(err.message || 'Something went wrong. Try again.', 'error');

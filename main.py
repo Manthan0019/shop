@@ -4,17 +4,16 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
-
-# Updated: AuthApiError is now imported directly from supabase, not gotrue
 from supabase import Client, create_client, AuthApiError
 
 load_dotenv()
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_ANON_KEY = os.environ["SUPABASE_ANON_KEY"]
-
-# Requires you to add this to your .env file for the delete_account route
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+
+# Read the live frontend URL from Render environment variables (fallback to local port)
+FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://127.0.0.1:5500")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
@@ -23,18 +22,20 @@ if SUPABASE_SERVICE_ROLE_KEY:
 
 app = FastAPI(title="ShopSphere API")
 
-# Updated: Explicitly allows both localhost variations to prevent CORS errors
+# Allow local development origins AND your production Render frontend
+allowed_origins = [
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    FRONTEND_ORIGIN.strip("/")  # Removes any accidental trailing slashes
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5500",
-        "http://127.0.0.1:5500"
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True, 
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # --- Pydantic Models ---
 
@@ -67,7 +68,6 @@ def register(payload: RegisterRequest):
             {
                 "email": payload.email,
                 "password": payload.password,
-                # This full_name is what your new SQL Trigger catches!
                 "options": {"data": {"full_name": payload.name}},
             }
         )
@@ -96,13 +96,13 @@ def login(payload: LoginRequest, response: Response):
     except AuthApiError as e:
         raise HTTPException(status_code=401, detail="Invalid email or password.")
 
-    # Securely set the HttpOnly cookie
+    # Optimized secure cookie deployment configuration
     response.set_cookie(
         key="access_token",
         value=result.session.access_token,
         httponly=True,
-        samesite="none", # Changed from lax to none for cross-domain cookies
-        secure=True,     # Changed from False to True because Render uses HTTPS
+        samesite="none",  # Required for cross-domain cookie passing on Render
+        secure=True,      # Forces HTTPS, which Render provides out of the box
     )
 
     return {
@@ -112,7 +112,7 @@ def login(payload: LoginRequest, response: Response):
     }
 
 
-# --- User Profile Routes (Interacting with the new public.users table) ---
+# --- User Profile Routes ---
 
 @app.get("/users/{user_id}")
 def get_user_profile(user_id: str):
