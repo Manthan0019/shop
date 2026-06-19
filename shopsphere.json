@@ -1,0 +1,159 @@
+{
+	"info": {
+		"name": "MechFinder API - Production",
+		"description": "Comprehensive local and cloud deployment matrix CRUD verification file for MechFinder.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "System",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentication & Profiles",
+			"item": [
+				{
+					"name": "Register User (Customer)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Yash Customer\",\n    \"email\": \"yashcustomer@gmail.com\",\n    \"password\": \"securepassword123\",\n    \"phone\": \"9876512345\",\n    \"role\": \"customer\"\n}"
+						},
+						"url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+					}
+				},
+				{
+					"name": "Register User (Mechanic)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Yash Mechanic\",\n    \"email\": \"yashmechanic@gmail.com\",\n    \"password\": \"securepassword123\",\n    \"phone\": \"9876599999\",\n    \"role\": \"mechanic\",\n    \"vehicle_types\": [\"car\", \"bike\"]\n}"
+						},
+						"url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+					}
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if(jsonData.token){",
+									"    pm.collectionVariables.set(\"auth_token\", jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"yashmechanic@gmail.com\",\n    \"password\": \"securepassword123\"\n}"
+						},
+						"url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+					}
+				},
+				{
+					"name": "Get My Profile",
+					"request": {
+						"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{auth_token}}", "type": "string" }] },
+						"method": "GET",
+						"url": { "raw": "{{base_url}}/api/profile", "host": ["{{base_url}}"], "path": ["api", "profile"] }
+					}
+				}
+			]
+		},
+		{
+			"name": "Roadside Assistance Core Features",
+			"item": [
+				{
+					"name": "Update Mechanic Status (Go Online)",
+					"request": {
+						"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{auth_token}}", "type": "string" }] },
+						"method": "PUT",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"is_online\": true,\n    \"lat\": 19.0760,\n    \"lng\": 72.8777\n}"
+						},
+						"url": { "raw": "{{base_url}}/api/mechanic/status", "host": ["{{base_url}}"], "path": ["api", "mechanic", "status"] }
+					}
+				},
+				{
+					"name": "Find Nearby Mechanics (Customer Action)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/mechanics/nearby?lat=19.0762&lng=72.8779&vehicle_type=bike",
+							"host": ["{{base_url}}"],
+							"path": ["api", "mechanics", "nearby"],
+							"query": [
+								{ "key": "lat", "value": "19.0762" },
+								{ "key": "lng", "value": "72.8779" },
+								{ "key": "vehicle_type", "value": "bike" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Service Request",
+					"request": {
+						"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{auth_token}}", "type": "string" }] },
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"issue_description\": \"Engine stalling out on highway split\",\n    \"vehicle_type\": \"bike\",\n    \"lat\": 19.0765,\n    \"lng\": 72.8780\n}"
+						},
+						"url": { "raw": "{{base_url}}/api/requests", "host": ["{{base_url}}"], "path": ["api", "requests"] }
+					}
+				},
+				{
+					"name": "View Incoming Pending Jobs (Mechanic Action)",
+					"request": {
+						"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{auth_token}}", "type": "string" }] },
+						"method": "GET",
+						"url": { "raw": "{{base_url}}/api/requests/pending", "host": ["{{base_url}}"], "path": ["api", "requests", "pending"] }
+					}
+				},
+				{
+					"name": "Accept Job Request",
+					"request": {
+						"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{auth_token}}", "type": "string" }] },
+						"method": "POST",
+						"url": { "raw": "{{base_url}}/api/requests/1/accept", "host": ["{{base_url}}"], "path": ["api", "requests", "1", "accept"] }
+					}
+				},
+				{
+					"name": "Mark Job Completed",
+					"request": {
+						"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{auth_token}}", "type": "string" }] },
+						"method": "POST",
+						"url": { "raw": "{{base_url}}/api/requests/1/complete", "host": ["{{base_url}}"], "path": ["api", "requests", "1", "complete"] }
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+		{ "key": "auth_token", "value": "", "type": "string" }
+	]
+}
