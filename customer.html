@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MechFinder — Customer Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght=600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#0F111A;
+    --panel:#16192B;
+    --panel-light:#1F243E;
+    --accent-coral:#FF7A45;
+    --accent-soft:#4776E6;
+    --text-light:#F4F6FB;
+    --text-dim:#8A94A6;
+    --success:#4CD97B;
+    --error:#FF4D4F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Inter', sans-serif; background:var(--bg-deep); color:var(--text-light); min-height:100vh;}
+  
+  .nav{background:var(--panel); padding:16px 32px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--panel-light);}
+  .logo{font-family:'Space Grotesk', sans-serif; font-size:20px; font-weight:700;}
+  .logo span{color:var(--accent-coral);}
+  .user-meta{display:flex; align-items:center; gap:20px;}
+  .btn{padding:8px 16px; border:none; border-radius:6px; font-weight:600; cursor:pointer; font-size:14px; transition:all 0.2s;}
+  .btn-danger{background:var(--error); color:white;}
+  .btn-primary{background:var(--accent-coral); color:var(--bg-deep);}
+  
+  .container{display:grid; grid-template-columns:1.20fr 0.80fr; gap:24px; padding:32px; max-width:1400px; margin:0 auto; height:calc(100vh - 100px);}
+  .panel-box{background:var(--panel); border-radius:12px; padding:24px; display:flex; flex-direction:column; gap:20px; border:1px solid var(--panel-light); overflow-y:auto;}
+  
+  #map{width:100%; height:100%; border-radius:12px; border:1px solid var(--panel-light); min-height:400px;}
+  
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field label{font-size:13px; color:var(--text-dim);}
+  .field input, .field select, .field textarea{padding:10px 14px; background:var(--bg-deep); border:1px solid var(--panel-light); border-radius:6px; color:white; outline:none; font-family:inherit;}
+  
+  .list-item {background:var(--panel-light); padding:16px; border-radius:8px; margin-bottom:12px; position:relative;}
+  .list-item h4 {font-family:'Space Grotesk', sans-serif; margin-bottom:4px;}
+  .list-item p {font-size:13px; color:var(--text-dim);}
+  
+  .status-pill {position:absolute; top:16px; right:16px; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase;}
+  .status-pending {background:rgba(255,122,69,0.15); color:var(--accent-coral);}
+  .status-accepted {background:rgba(71,118,230,0.15); color:var(--accent-soft);}
+  .status-completed {background:rgba(76,217,123,0.15); color:var(--success);}
+  .alert {padding:10px; border-radius:6px; font-size:13px;}
+  .alert-error {background:rgba(255,77,79,0.1); color:var(--error);}
+  .alert-success {background:rgba(76,217,123,0.1); color:var(--success);}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="logo">Mech<span>Finder</span></div>
+  <div class="user-meta">
+    <p>Welcome, <span id="user-name" style="font-weight:600; color:var(--accent-coral);">Loading...</span> (Customer)</p>
+    <button class="btn btn-danger" id="logout-btn">Sign out</button>
+  </div>
+</div>
+
+<div class="container">
+  <div style="display:flex; flex-direction:column; gap:24px;">
+    <div style="flex:1;"><div id="map"></div></div>
+    
+    <div class="panel-box" style="flex:0.5;">
+      <h3 style="font-family:'Space Grotesk';">Find Nearby Mechanics</h3>
+      <div id="find-alert" class="alert alert-error hidden"></div>
+      <form id="find-form" style="display:flex; gap:16px; align-items:flex-end;">
+        <div class="field" style="flex:1;">
+          <label for="vehicle_type">Select Vehicle Type</label>
+          <select id="vehicle_type">
+            <option value="car">Car</option>
+            <option value="bike">Motorcycle / Bike</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding:12px 24px;">Scan Radius</button>
+      </form>
+      <div id="mechanics-list" style="overflow-y:auto; max-height:150px;">
+        <p style="color:var(--text-dim); font-size:14px;">Scan your radius to find live online mechanics.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:24px;">
+    <div class="panel-box">
+      <h3 style="font-family:'Space Grotesk';">Broadcast Roadside Emergency</h3>
+      <div id="request-alert" class="alert hidden"></div>
+      <form id="request-form" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="field">
+          <label for="req_vehicle_type">Stranded Vehicle Type</label>
+          <select id="req_vehicle_type">
+            <option value="car">Car</option>
+            <option value="bike">Motorcycle / Bike</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="issue">Describe the breakdown issue</label>
+          <textarea id="issue" rows="3" placeholder="E.g., Flat tire on roadside, engine overheating, fuel delivery failure..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="padding:12px 0; background:var(--error); color:white;">Broadcast Emergency</button>
+      </form>
+    </div>
+
+    <div class="panel-box" style="flex:1;">
+      <h3 style="font-family:'Space Grotesk';">My Service Requests Requests</h3>
+      <div id="requests-list">
+        <p style="color:var(--text-dim); font-size:14px;">No active distress loops broadcasted.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/static/js/app.js"></script>
+<script src="/static/js/customer.js"></script>
+</body>
+</html>

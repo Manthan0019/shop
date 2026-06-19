@@ -1,13 +1,21 @@
-import os
 import math
+import os
+from pathlib import Path
 from typing import List, Optional
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status, Response, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from supabase import Client, create_client, AuthApiError
 
 load_dotenv()
+
+# Explicit directory mapping variables
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
 
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_ANON_KEY = os.environ["SUPABASE_ANON_KEY"]
@@ -31,6 +39,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount the static folder directory asset route
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # --- Pydantic Data Models ---
 
@@ -78,11 +89,46 @@ async def get_current_user_id(request: Request) -> str:
     except Exception:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token or expired session.")
 
+# --- Frontend View Servicing Handlers ---
+
+def _page(name: str) -> FileResponse:
+    page_path = BASE_DIR / name
+    if not page_path.exists():
+        raise HTTPException(status_code=404, detail=f"Frontend layout file '{name}' missing from workspace root.")
+    return FileResponse(page_path)
+
+@app.get("/")
+def index():
+    return _page("index.html")
+
+@app.get("/login")
+def login_page():
+    return _page("index.html")
+
+@app.get("/signup")
+def signup_page():
+    return _page("index.html")
+
+@app.get("/customer")
+def customer_page():
+    return _page("customer.html")
+
+@app.get("/mechanic")
+def mechanic_page():
+    return _page("mechanic.html")
+
 # --- Core API Routes ---
 
 @app.get("/health")
 def health_check():
     return {"status": "ok", "service": "MechFinder Engine"}
+
+@app.get("/api/config")
+def get_config():
+    return {
+        "supabaseUrl": SUPABASE_URL,
+        "supabaseAnonKey": SUPABASE_ANON_KEY
+    }
 
 @app.post("/auth/register", status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterRequest):

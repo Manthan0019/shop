@@ -185,6 +185,10 @@
       if (!res.ok) throw new Error(data.detail || 'Authentication routing error.');
       
       showBanner(`Authorized successfully! Redirecting operational profiles...`, 'success');
+      localStorage.setItem('supabase_token', data.token);
+    setTimeout(() => {
+      window.location.href = data.profile.role === 'mechanic' ? '/mechanic' : '/customer';
+    }, 1000);
       // Manage your client view layouts based on user roles here:
       console.log("Logged in user identity:", data.profile);
     } catch (err) {
