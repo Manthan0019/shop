@@ -32,7 +32,14 @@
   .container{display:grid; grid-template-columns:1.20fr 0.80fr; gap:24px; padding:32px; max-width:1400px; margin:0 auto; height:calc(100vh - 100px);}
   .panel-box{background:var(--panel); border-radius:12px; padding:24px; display:flex; flex-direction:column; gap:20px; border:1px solid var(--panel-light); overflow-y:auto;}
   
-  #map{width:100%; height:100%; border-radius:12px; border:1px solid var(--panel-light); min-height:400px;}
+  .map-container{background:var(--panel); border-radius:12px; border:1px solid var(--panel-light); overflow:hidden; display:flex; flex-direction:column; flex:1;}
+  .map-header{padding:16px 20px; border-bottom:1px solid var(--panel-light); display:flex; align-items:center; justify-content:space-between;}
+  .map-header h3{margin:0; font-family:'Space Grotesk'; font-size:16px;}
+  .map-status{display:flex; gap:12px; font-size:12px;}
+  .status-dot{width:8px; height:8px; border-radius:50%; margin-right:4px;}
+  .dot-user{background:var(--accent-soft);}
+  .dot-mechanic{background:var(--accent-coral);}
+  #map{width:100%; flex:1; min-height:300px;}
   
   .field{display:flex; flex-direction:column; gap:6px;}
   .field label{font-size:13px; color:var(--text-dim);}
@@ -64,8 +71,17 @@
 
 <div class="container">
   <div style="display:flex; flex-direction:column; gap:24px;">
-    <div style="flex:1;"><div id="map"></div></div>
-    
+    <div class="map-container">
+      <div class="map-header">
+        <h3>Live Service Map</h3>
+        <div class="map-status">
+          <div><span class="status-dot dot-user"></span>You</div>
+          <div><span class="status-dot dot-mechanic"></span>Mechanics</div>
+        </div>
+      </div>
+      <div id="map"></div>
+    </div>
+
     <div class="panel-box" style="flex:0.5;">
       <h3 style="font-family:'Space Grotesk';">Find Nearby Mechanics</h3>
       <div id="find-alert" class="alert alert-error hidden"></div>

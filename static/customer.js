@@ -42,8 +42,15 @@ async function initMap() {
     attribution: "&copy; OpenStreetMap contributors",
   }).addTo(map);
 
-  marker = L.marker([userLocation.lat, userLocation.lng]).addTo(map);
-  marker.bindPopup("You are here").openPopup();
+  const userIcon = L.divIcon({
+    className: "user-marker",
+    html: `<svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="rgba(71,118,230,0.2)" stroke="rgba(71,118,230,1)" stroke-width="2"/><circle cx="16" cy="16" r="6" fill="rgba(71,118,230,1)"/></svg>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+
+  marker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon }).addTo(map);
+  marker.bindPopup("<b>Your Location</b>").openPopup();
 }
 
 async function onFindMechanic(e) {
@@ -67,8 +74,15 @@ async function onFindMechanic(e) {
       return;
     }
 
+    const mechanicIcon = L.divIcon({
+      className: "mechanic-marker",
+      html: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" fill="rgba(255,122,69,0.2)" stroke="rgba(255,122,69,1)" stroke-width="2"/><text x="14" y="17" font-size="12" font-weight="bold" fill="rgba(255,122,69,1)" text-anchor="middle">⚙</text></svg>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+
     data.mechanics.forEach((m) => {
-      L.marker([m.lat, m.lng])
+      L.marker([m.lat, m.lng], { icon: mechanicIcon })
         .addTo(map)
         .bindPopup(`<b>${m.full_name}</b><br>${formatDistance(m.distance_km)}`);
 
