@@ -1,5 +1,8 @@
 let mechanicLocation = null;
 let pollTimer = null;
+let map = null;
+let mechanicMarker = null;
+let pendingMarkers = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   const session = await requireAuth();
@@ -23,9 +26,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  await initMap();
   loadMyJobs();
   pollTimer = setInterval(loadPendingJobs, 5000);
 });
+
+async function initMap() {
+  try {
+    mechanicLocation = await getCurrentPosition();
+  } catch {
+    mechanicLocation = { lat: 19.076, lng: 72.8777 };
+  }
+
+  map = L.map("map").setView([mechanicLocation.lat, mechanicLocation.lng], 13);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(map);
+
+  const mechanicIcon = L.divIcon({
+    className: "mechanic-home-marker",
+    html: `<svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="rgba(76,217,123,0.18)" stroke="rgba(76,217,123,1)" stroke-width="2"/><circle cx="16" cy="16" r="6" fill="rgba(76,217,123,1)"/></svg>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+
+  mechanicMarker = L.marker([mechanicLocation.lat, mechanicLocation.lng], { icon: mechanicIcon }).addTo(map);
+  mechanicMarker.bindPopup("<b>Your operational position</b>").openPopup();
+}
 
 async function onToggleOnline(e) {
   const alertEl = document.getElementById("status-alert");
@@ -67,6 +94,8 @@ async function loadPendingJobs() {
   try {
     const data = await apiFetch("/api/requests/pending");
     list.innerHTML = "";
+    pendingMarkers.forEach((existingMarker) => existingMarker.remove());
+    pendingMarkers = [];
 
     if (!data.requests.length) {
       list.innerHTML = "<p style='color:var(--text-dim); font-size:14px;'>No pending jobs nearby.</p>";
@@ -75,6 +104,13 @@ async function loadPendingJobs() {
 
     data.requests.forEach((req) => {
       const customer = req.profiles;
+      if (map && Number.isFinite(req.lat) && Number.isFinite(req.lng)) {
+        const jobMarker = L.marker([req.lat, req.lng])
+          .addTo(map)
+          .bindPopup(`<b>Request #${req.id}</b><br>${req.vehicle_type.toUpperCase()} · ${customer ? customer.full_name : "Customer"}`);
+        pendingMarkers.push(jobMarker);
+      }
+
       const item = document.createElement("div");
       item.className = "list-item";
       item.innerHTML = `
@@ -90,6 +126,11 @@ async function loadPendingJobs() {
     list.querySelectorAll(".accept-btn").forEach((btn) => {
       btn.addEventListener("click", () => acceptJob(btn.dataset.id));
     });
+
+    if (pendingMarkers.length) {
+      const bounds = L.latLngBounds([mechanicLocation.lat, mechanicLocation.lng], pendingMarkers.map((markerItem) => markerItem.getLatLng()));
+      map.fitBounds(bounds.pad(0.18));
+    }
   } catch {
     list.innerHTML = "<p style='color:var(--error); font-size:13px;'>Could not parse incoming regional queues.</p>";
   }

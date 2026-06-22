@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MechFinder — Mechanic Workspace</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght=600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -33,6 +34,11 @@
 
   .container{display:grid; grid-template-columns:1fr 1fr; gap:32px; padding:32px; max-width:1300px; margin:0 auto;}
   .panel-box{background:var(--panel); border-radius:12px; padding:24px; border:1px solid var(--panel-light); display:flex; flex-direction:column; gap:16px;}
+  .map-box{padding:0; overflow:hidden;}
+  .map-header{padding:18px 24px; border-bottom:1px solid var(--panel-light); display:flex; justify-content:space-between; align-items:center;}
+  .map-header h3{font-family:'Space Grotesk'; font-size:16px;}
+  .map-body{height:340px;}
+  #map{width:100%; height:100%;}
   
   /* Sleek Availability Switch Styling */
   .switch-row {display:flex; justify-content:space-between; align-items:center; background:var(--panel-light); padding:16px; border-radius:8px;}
@@ -86,6 +92,16 @@
       <div id="status-alert" class="alert hidden"></div>
     </div>
 
+    <div class="panel-box map-box">
+      <div class="map-header">
+        <h3>Dispatch Map</h3>
+        <span style="font-size:12px; color:var(--text-dim);">Pending and active jobs</span>
+      </div>
+      <div class="map-body">
+        <div id="map"></div>
+      </div>
+    </div>
+
     <div class="panel-box" style="flex:1;">
       <h3 style="font-family:'Space Grotesk';">Pending Nearby Requests</h3>
       <div id="pending-list">
@@ -102,8 +118,9 @@
   </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/static/js/app.js"></script>
-<script src="/static/js/mechanic.js"></script>
+<script src="/static/app.js"></script>
+<script src="/static/mechanic.js"></script>
 </body>
 </html>

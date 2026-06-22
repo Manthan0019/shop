@@ -130,9 +130,9 @@
 
 <script>
   // Swap this value out with your live render application url once pushed to production
-  const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://localhost:8000' 
-    : 'https://shop-lb1z.onrender.com';
+  const API_BASE = window.location.origin.startsWith('http')
+    ? window.location.origin
+    : 'http://localhost:8000';
 
   const tabLogin = document.getElementById('tabLogin');
   const tabRegister = document.getElementById('tabRegister');
@@ -185,6 +185,7 @@
       if (!res.ok) throw new Error(data.detail || 'Authentication routing error.');
       
       showBanner(`Authorized successfully! Redirecting operational profiles...`, 'success');
+      localStorage.setItem('access_token', data.token);
       localStorage.setItem('supabase_token', data.token);
     setTimeout(() => {
       window.location.href = data.profile.role === 'mechanic' ? '/mechanic' : '/customer';

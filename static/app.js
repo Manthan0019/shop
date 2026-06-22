@@ -25,6 +25,9 @@ async function getSupabase() {
 
 // Extracts active authorization session state strings to forward over the wire
 async function getAccessToken() {
+  const storedToken = localStorage.getItem('access_token') || localStorage.getItem('supabase_token');
+  if (storedToken) return storedToken;
+
   const sb = await getSupabase();
   const { data } = await sb.auth.getSession();
   return data.session?.access_token || null;
@@ -59,6 +62,11 @@ function hideAlert(el) {
 
 // Navigation guard ensuring session authenticity across route transitions
 async function requireAuth(redirectTo = "/login") {
+  const storedToken = localStorage.getItem('access_token') || localStorage.getItem('supabase_token');
+  if (storedToken) {
+    return { access_token: storedToken };
+  }
+
   const sb = await getSupabase();
   const { data } = await sb.auth.getSession();
   if (!data.session) {
@@ -83,7 +91,13 @@ async function redirectByRole() {
 
 async function logout() {
   const sb = await getSupabase();
-  await sb.auth.signOut();
+  try {
+    await sb.auth.signOut();
+  } catch {
+    // Ignore session cleanup errors and fall through to local token cleanup.
+  }
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('supabase_token');
   window.location.href = "/login";
 }
 

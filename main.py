@@ -252,10 +252,11 @@ def view_regional_pending_jobs(user_id: str = Depends(get_current_user_id)):
     mech = supabase.table("profiles").select("vehicle_types").eq("id", user_id).execute()
     if not mech.data:
         raise HTTPException(status_code=403, detail="Access verification rejected.")
-    
-    types = mech.data[0]["vehicle_types"]
-    response = supabase.table("requests").select("*, profiles:customer_id(full_name, phone)").eq("status", "pending").ov("vehicle_type", types).execute()
-    return {"requests": response.data}
+
+    types = set(mech.data[0].get("vehicle_types") or [])
+    response = supabase.table("requests").select("*, profiles:customer_id(full_name, phone)").eq("status", "pending").execute()
+    requests = [item for item in response.data if item.get("vehicle_type") in types]
+    return {"requests": requests}
 
 @app.post("/api/requests/{request_id}/accept")
 def accept_roadside_job(request_id: int, user_id: str = Depends(get_current_user_id)):

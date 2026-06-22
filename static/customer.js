@@ -1,6 +1,7 @@
 let map = null;
 let marker = null;
 let userLocation = null;
+let mechanicMarkers = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   const session = await requireAuth();
@@ -62,6 +63,9 @@ async function onFindMechanic(e) {
 
   try {
     if (!userLocation) userLocation = await getCurrentPosition();
+    mechanicMarkers.forEach((existingMarker) => existingMarker.remove());
+    mechanicMarkers = [];
+
     const data = await apiFetch(
       `/api/mechanics/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&vehicle_type=${vehicleType}`
     );
@@ -82,9 +86,10 @@ async function onFindMechanic(e) {
     });
 
     data.mechanics.forEach((m) => {
-      L.marker([m.lat, m.lng], { icon: mechanicIcon })
+      const mechanicMarker = L.marker([m.lat, m.lng], { icon: mechanicIcon })
         .addTo(map)
         .bindPopup(`<b>${m.full_name}</b><br>${formatDistance(m.distance_km)}`);
+      mechanicMarkers.push(mechanicMarker);
 
       const item = document.createElement("div");
       item.className = "list-item";
@@ -94,6 +99,11 @@ async function onFindMechanic(e) {
       `;
       list.appendChild(item);
     });
+
+    if (mechanicMarkers.length) {
+      const bounds = L.latLngBounds([userLocation.lat, userLocation.lng], mechanicMarkers.map((markerItem) => markerItem.getLatLng()));
+      map.fitBounds(bounds.pad(0.18));
+    }
   } catch (err) {
     showAlert(alertEl, err.message);
   }
